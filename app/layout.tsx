@@ -4,20 +4,21 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // app/layout.tsx
-import { Cinzel, Cormorant_Garamond, Lato } from 'next/font/google'
+import { Cinzel, Cormorant_Garamond, Lato, Great_Vibes } from 'next/font/google'
 
 <link href="https://fonts.googleapis.com/css2?family=Playball&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
 const cinzel = Cinzel({ subsets: ['latin'], weight: ['400', '600', '700'], variable: '--font-cinzel' })
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['300', '400'], style: ['normal', 'italic'], variable: '--font-cormorant' })
 const lato = Lato({ subsets: ['latin'], weight: ['300', '400', '700'], variable: '--font-lato' })
+const greatVibes = Great_Vibes({ subsets: ['latin'], weight: ['400'], variable: '--font-great-vibes' })
 
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "v0 App",
+  title: "Diospesy Wedding",
   description: "Created with v0",
   generator: "v0.app",
   icons: {
