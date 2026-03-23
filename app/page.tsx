@@ -306,8 +306,7 @@ export default function Page() {
                   What to Expect
                 </div>
                 <div className="text-[0.8rem] text-w-900 leading-[1.82]">
-                  - Full dinner — salads, herb-marinated grills,
-                  dessert buffet
+                  - Full dinner — salads, herb-marinated grills, dessert buffet
                   <br />
                   - Live DJ & dance floor
                   <br />
