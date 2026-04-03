@@ -38,4 +38,6 @@ model RSVP {
 
   dietary      String[]
   message      String?
+  replied      Boolean  @default(false)
+  repliedAt    DateTime?
 }

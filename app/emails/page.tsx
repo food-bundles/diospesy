@@ -31,6 +31,8 @@ interface RSVP {
   passport_exp: string | null;
   dietary: string[];
   message: string | null;
+  replied: boolean;
+  repliedAt: string | null;
 }
 
 const ATTENDING_COLORS: Record<string, string> = {
@@ -169,6 +171,12 @@ export default function AdminRSVPs() {
     return rsvps.map((r) => r.email);
   };
 
+  const getRsvpIds = (): string[] => {
+    if (replyTarget === "one" && replyRsvpId) return [replyRsvpId];
+    if (replyTarget === "selected") return Array.from(selected);
+    return rsvps.map((r) => r.id);
+  };
+
   const sendReply = async () => {
     setSending(true);
     setSendResult(null);
@@ -181,10 +189,24 @@ export default function AdminRSVPs() {
           subject,
           html: editorHtmlRef.current,
           text: editorTextRef.current,
+          rsvpIds: getRsvpIds(),
         }),
       });
       const data = await res.json();
-      setSendResult(data.error ? `Error: ${data.error}` : `Sent to ${getRecipients().length} recipient(s).`);
+      if (data.error) {
+        setSendResult(`Error: ${data.error}`);
+      } else {
+        setSendResult(`Sent to ${getRecipients().length} recipient(s).`);
+        // update local replied state
+        const ids = getRsvpIds();
+        setRsvps((prev) =>
+          prev.map((r) =>
+            ids.includes(r.id)
+              ? { ...r, replied: true, repliedAt: new Date().toISOString() }
+              : r
+          )
+        );
+      }
     } catch {
       setSendResult("Network error.");
     } finally {
@@ -318,50 +340,40 @@ export default function AdminRSVPs() {
                     <tr
                       key={r.id}
                       className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() =>
-                        setExpanded(expanded === r.id ? null : r.id)
-                      }
+                      onClick={() => setExpanded(expanded === r.id ? null : r.id)}
                     >
-                      <td
-                        className="px-4 py-3"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSelect(r.id);
-                        }}
-                      >
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selected.has(r.id)}
                           onChange={() => toggleSelect(r.id)}
-                          className="accent-gray-900"
+                          className="accent-gray-900 cursor-pointer"
                         />
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-900">
-                        {r.first_name} {r.last_name}
+                        <div className="flex items-center gap-2">
+                          {r.first_name} {r.last_name}
+                          {r.replied
+                            ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Replied</span>
+                            : <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">Not replied</span>
+                          }
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{r.email}</td>
                       <td className="px-4 py-3 text-gray-600">{r.phone}</td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                            ATTENDING_COLORS[r.attending] ??
-                            "bg-gray-100 text-gray-700"
-                          }`}
-                        >
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                          ATTENDING_COLORS[r.attending] ?? "bg-gray-100 text-gray-700"
+                        }`}>
                           {r.attending}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-gray-500">
                         {new Date(r.createdAt).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
+                          day: "2-digit", month: "short", year: "numeric",
                         })}
                       </td>
-                      <td
-                        className="px-4 py-3"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => openReply("one", r.id)}
                           className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 text-gray-700"
@@ -432,6 +444,21 @@ export default function AdminRSVPs() {
                                 <Detail label="Message" value={r.message} />
                               </div>
                             )}
+                          </div>
+                          {/* Reply status + button inside expanded */}
+                          <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                            <div className="text-xs text-gray-500">
+                              {r.replied
+                                ? <span className="text-emerald-700">✓ Replied{r.repliedAt ? ` on ${new Date(r.repliedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : ""}</span>
+                                : <span className="text-gray-400">No reply sent yet</span>
+                              }
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openReply("one", r.id); }}
+                              className="text-xs px-4 py-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-700"
+                            >
+                              {r.replied ? "Reply again" : "Reply"}
+                            </button>
                           </div>
                         </td>
                       </tr>

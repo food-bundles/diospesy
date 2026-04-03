@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { recipients, subject, html, text } = await req.json();
+    const { recipients, subject, html, text, rsvpIds } = await req.json();
 
     if (!recipients?.length || !subject || (!html && !text)) {
       return NextResponse.json({ error: "Missing fields." }, { status: 400 });
@@ -21,6 +22,14 @@ export async function POST(req: NextRequest) {
       text: text ?? "",
       html: html ?? "",
     });
+
+    // mark as replied
+    if (rsvpIds?.length) {
+      await prisma.rSVP.updateMany({
+        where: { id: { in: rsvpIds } },
+        data: { replied: true, repliedAt: new Date() },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
